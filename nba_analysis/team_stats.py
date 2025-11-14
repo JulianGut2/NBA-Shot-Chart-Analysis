@@ -6,7 +6,7 @@ Provides functionality to analyze and visualize team statistics
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from nba_api.stats.endpoints import leaguedashteamstats, teamgamelog, teamyearbyyearstats
+from nba_api.stats.endpoints import leaguedashteamstats, leaguegamelog, teamyearbyyearstats
 from nba_api.stats.static import teams
 
 
@@ -82,13 +82,16 @@ class TeamStatsAnalyzer:
         if self.team_id is None:
             raise ValueError(f"Team '{team_name}' not found")
         
-        gamelog = teamgamelog.TeamGameLog(
-            team_id=self.team_id,
+        # Use LeagueGameLog and filter by team
+        gamelog = leaguegamelog.LeagueGameLog(
             season=season,
-            season_type_all_star=season_type
+            season_type_all_star=season_type,
+            player_or_team_abbreviation='T'
         )
         
-        self.game_log = gamelog.get_data_frames()[0]
+        all_games = gamelog.get_data_frames()[0]
+        # Filter for the specific team
+        self.game_log = all_games[all_games['TEAM_ID'] == self.team_id].reset_index(drop=True)
         return self.game_log
     
     def plot_league_leaders(self, stat_column='PTS', top_n=10, figsize=(12, 8)):
